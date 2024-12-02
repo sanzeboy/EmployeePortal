@@ -1,0 +1,28 @@
+﻿@{
+    ViewBag.Title = "Login";
+}
+<div class="container row g-3">
+    <h2 class="text-center">Login</h2>
+
+    
+    <form method="post" class="col-md-3 m-auto" action="/Account/Login">
+        @if (!string.IsNullOrEmpty(ViewBag.Error))
+        {
+            <div class="text-center">
+                <div class="alert alert-danger">@ViewBag.Error</div>
+            </div>
+        }
+        <div class="form-group ">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" class="form-control" required />
+        </div>
+        <div class="form-group text-center m-3">
+            <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+
+    </form>
+</div>

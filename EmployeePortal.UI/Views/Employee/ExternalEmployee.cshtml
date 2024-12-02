@@ -1,0 +1,61 @@
+﻿@{
+    ViewData["Title"] = "Employee Data";
+}
+
+<h2>Employee Data</h2>
+
+<table id="employeeTable" class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Employee Name</th>
+            <th>Salary</th>
+            <th>Age</th>
+            <th>Profile Image</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Rows will be appended here -->
+
+    </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: '/Employee/GetEmployeeData',
+            type: 'GET',
+            success: function (data) {
+                if (data) {
+                    const employees = JSON.parse(data)?.data;
+                    let rows = '';
+                    employees.forEach(employee => {
+                        rows += `
+                            <tr>
+                                <td>${employee.id}</td>
+                                <td>${employee.employee_name}</td>
+                                <td>${employee.employee_salary}</td>
+                                <td>${employee.employee_age}</td>
+                                <td>
+                                    ${
+                                        employee.profile_image
+                                            ? `<img src="${employee.profile_image}" alt="Profile Image" style="width: 50px; height: 50px;">`
+                                            : 'No Image'
+                                    }
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    $('#employeeTable tbody').html(rows);
+                } else {
+                    alert("Failed to fetch employee data from api");
+                }
+            },
+            error: function (err) {
+                console.error("Error fetching employee data:", err);
+                alert("An error occurred while fetching employee data.");
+            }
+        });
+    });
+</script>

@@ -1,0 +1,10 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Server Error";
+}
+
+<div class="text-center">
+    <h1 class="display-4">500 - Internal Server Error</h1>
+    <p>Something went wrong on our side. Please try again later.</p>
+    <a class="btn btn-primary" href="@Url.Action("Index", "Home")">Go to Home</a>
+</div>

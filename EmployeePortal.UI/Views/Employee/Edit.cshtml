@@ -1,0 +1,101 @@
+﻿@using EmployeePortal.Application.Services.Employees.Models.Dtos
+@using EmployeePortal.Domain.Entities.Employees
+@model EmployeeDto
+
+@{
+    ViewBag.Title = "Edit Employee";
+}
+
+<h2>Edit Employee</h2>
+@if (!string.IsNullOrEmpty(Model.ProfileImage))
+{
+    <img id="profileImagePreview" src="@Url.Content("~/"+Model.ProfileImage)" alt="Profile Image" class="img-thumbnail mb-2" style="max-width: 150px;" />
+}
+<form asp-action="Edit" method="post" class="col-md-5" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="form-group">
+        <label asp-for="FirstName"></label>
+        <input type="text" class="form-control" asp-for="FirstName" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="LastName"></label>
+        <input type="text" class="form-control" asp-for="LastName" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Designation"></label>
+        <input type="text" class="form-control" asp-for="Designation" />
+        <span asp-validation-for="Designation" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="DOB"></label>
+        <input type="date" class="form-control" asp-for="DOB" />
+        <span asp-validation-for="DOB" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Gender"></label>
+        <select class="form-control" asp-for="Gender">
+            <option value="">Select Gender</option>
+            @foreach (var gender in Enum.GetValues(typeof(GenderEnum)))
+            {
+                <option value="@gender">@gender</option>
+            }
+        </select>
+        <span asp-validation-for="Gender" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Salary"></label>
+        <input type="number" step="0.01" class="form-control" asp-for="Salary" />
+        <span asp-validation-for="Salary" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="ProfileImage"></label>
+        <div class="input-group mb-3">
+            <input type="file" id="profileImageUpload" class="form-control" accept="image/*" />
+            <button type="button" id="uploadImageButton" class="btn btn-primary">Upload Image</button>
+        </div>
+        <span id="uploadMessage" class="text-success"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $('#uploadImageButton').on('click', function () {
+                var formData = new FormData();
+                formData.append('Image', $('#profileImageUpload')[0].files[0]);
+                formData.append('Id', '@Model.Id');
+
+                $.ajax({
+                    url: '@Url.Action("UploadProfileImage", "Employee")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.success) {
+                            $('#uploadMessage').text('Image uploaded successfully!');
+                            $('#profileImagePreview').attr('src', response.imageUrl);
+                        } else {
+                            $('#uploadMessage').text('Failed to upload image.');
+                        }
+                    },
+                    error: function (err) {
+                        $('#uploadMessage').text(err.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}

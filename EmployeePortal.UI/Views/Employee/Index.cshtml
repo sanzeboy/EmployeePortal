@@ -1,0 +1,348 @@
+﻿@using EmployeePortal.Application.Services.Employees.Models.Dtos
+@using EmployeePortal.Domain.Entities.Employees
+@using EmployeePortal.Application
+@model EmployeeViewModel
+@{
+    ViewBag.Title = "Employees";
+}
+
+<h2>Employees</h2>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <a asp-action="Create" class="btn btn-primary">Add Employee</a>
+        }
+
+    </div>
+    <div>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importModal">
+                Import
+            </button>
+
+            <button class="btn btn-outline-primary" id="print" onclick="window.print()">Print</button>
+        }
+        <button class="btn btn-outline-dark" onclick="exportSelectedRows('excel')">Export to Excel</button>
+        <button class="btn btn-outline-dark" onclick="exportSelectedRows('csv')">Export to CSV</button>
+        <button class="btn btn-outline-dark" onclick="exportSelectedRows('pdf')">Export to PDF</button>
+    </div>
+
+</div>
+
+<!-- Filter and Search Section -->
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label for="search" class="form-label">Search</label>
+        <input type="text" id="search" class="form-control" placeholder="Search by name or designation" asp-for="@Model.Filter.Search" />
+    </div>
+    <div class="col-md-3">
+        <label for="dobFrom" class="form-label">DOB From</label>
+        <input type="date" id="dobFrom" class="form-control" asp-for="@Model.Filter.DobFrom" />
+    </div>
+    <div class="col-md-3">
+        <label for="dobTo" class="form-label">DOB To</label>
+        <input type="date" id="dobTo" class="form-control" asp-for="@Model.Filter.DobTo" />
+    </div>
+    <div class="col-md-3">
+        <label for="gender" class="form-label">Gender</label>
+        <select asp-for=Filter.Gender id="gender" asp-items="Html.GetEnumSelectList<GenderEnum>()" class="form-select">
+            <option value="">All</option>
+        </select>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label for="salaryFrom" class="form-label">Salary From</label>
+        <input type="number" id="salaryFrom" class="form-control" asp-for="@Model.Filter.SalaryFrom" />
+    </div>
+    <div class="col-md-3">
+        <label for="salaryTo" class="form-label">Salary To</label>
+        <input type="number" id="salaryTo" class="form-control" asp-for="@Model.Filter.SalaryTo" />
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+    </div>
+</div>
+<!-- Employee Table -->
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                <input type="checkbox" id="selectAll" />
+            </th>
+            <th>
+                <a href="@Url.Action("Index", new { sortBy = "FirstName", desc = Model.Filter.SortBy == "FirstName" && Model.Filter.Desc ? false : true })">
+                    @Html.DisplayNameFor(m => m.Data.Results[0].FirstName)
+                </a>
+            </th>
+            <th>
+                <a href="@Url.Action("Index", new { sortBy = "LastName", desc = Model.Filter.SortBy == "LastName" && Model.Filter.Desc ? false : true })">
+                    @Html.DisplayNameFor(m => m.Data.Results[0].LastName)
+                </a>
+            </th>
+            <th>@Html.DisplayNameFor(m => m.Data.Results[0].Designation)</th>
+            <th>@Html.DisplayNameFor(m => m.Data.Results[0].DOB)</th>
+            <th>@Html.DisplayNameFor(m => m.Data.Results[0].Gender)</th>
+            <th>@Html.DisplayNameFor(m => m.Data.Results[0].Salary)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var employee in Model.Data.Results)
+        {
+            <tr>
+                <td>
+                    <input type="checkbox" class="row-checkbox" value="@employee.Id" />
+                </td>
+                <td>@employee.FirstName</td>
+                <td>@employee.LastName</td>
+                <td>@employee.Designation</td>
+                <td>@employee.DOB.ToShortDateString()</td>
+                <td>@employee.Gender</td>
+                <td>@employee.Salary.ToString()</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@employee.Id" class="btn btn-info">Details</a>
+
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <a asp-action="Edit" asp-route-id="@employee.Id" class="btn btn-warning">Edit</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div>
+    @Html.Partial("_Pagination", Model.Data)
+</div>
+
+
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Import Employees</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-end m-2">
+                    <a asp-action="SampleFile" class="btn btn-warning ">Download Sample</a>
+                </div>
+
+                <form id="importForm" enctype="multipart/form-data">
+                    <label for="fileInput" class="form-label">Select File (Excel/CSV)</label>
+                    <input type="file" class="form-control col-auto" id="fileInput" name="file" accept=".csv, .xlsx" required />
+                    <div class="text-end m-2">
+                        <button type="button" id="previewImport" class="btn btn-primary ">Preview</button>
+
+                    </div>
+
+                    <div id="validationMessages" class="text-danger"></div>
+                    <div id="skippedRowsMessage" class="text-warning"></div>
+
+                </form>
+                <hr />
+                <div id="previewTable" style="display:none;">
+                    <h6>Preview Imported Data</h6>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Full Name</th>
+                                <th>Date of Birth</th>
+                                <th>Gender</th>
+                                <th>Salary</th>
+                                <th>Designation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewData"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="close" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="saveImport" class="btn btn-success" style="display:none;">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function () {
+            $('#previewImport').on('click', function () {
+                var formData = new FormData($('#importForm')[0]);
+
+                $.ajax({
+                    url: '@Url.Action("PreviewImport")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.data) {
+                            // Populate preview table
+                            $('#previewTable').show();
+                            $('#previewData').empty();
+                            response.data.forEach((row, index) => {
+                                $('#previewData').append(`
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${row.firstName} ${row.lastName}</td>
+                                        <td>${new Date(row.dob).toLocaleDateString()}</td>
+                                        <td>${row.gender}</td>
+                                        <td>${row.salary}</td>
+                                        <td>${row.designation}</td>
+                                    </tr>
+                                `);
+                            });
+
+                            $('#saveImport').show();
+                        }
+                        $('#validationMessages').empty();
+                        if(response.errorMessages)
+                        {
+                            response.errorMessages.forEach(data =>{
+                                    $('#validationMessages').append(data + "<br />");
+                            });
+                        }
+                        else{
+                            if(response.message)
+                                $('#validationMessages').text(response.message);
+                            else
+                                $('#validationMessages').text("'An error occurred while processing the file.");
+
+                        }
+
+                    },
+                    error: function () {
+                        alert('An error occurred while processing the file.');
+                    }
+                });
+            });
+
+            $('#saveImport').on('click', function () {
+                var formData = new FormData($('#importForm')[0]);
+                $.ajax({
+                   url: '@Url.Action("SaveImport")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.success) {
+                            var skippedMessage = "";
+                            if(response.skippedRows)
+                                skippedMessage = response.skippedRows.length +" row" +(response.skippedRows.length>1 ? "s " : "" ) + "[" + response.skippedRows.toString() + "] Skipped";
+
+                            alert("Import successfull.\n"+ skippedMessage);
+                            location.reload();
+                        }
+                        $('#validationMessages').empty();
+                        if(response.errorMessages)
+                        {
+                            response.errorMessages.forEach(data =>{
+                                    $('#validationMessages').append(data + "<br />");
+                            });
+                        }
+                        else{
+                            if(response.message)
+                                $('#validationMessages').text(response.message);
+                            else
+                                $('#validationMessages').text("'An error occurred while processing the file.");
+
+                        }
+
+                    },
+                    error: function (er) {
+                        console.log(er)
+                        alert('An error occurred while saving data.');
+                    }
+                });
+            });
+        });
+
+         $('#close').on('click', function () {
+            location.reload();
+         })
+
+
+
+        function applyFilters() {
+            const params = new URLSearchParams();
+            params.set("search", document.getElementById("search").value);
+            params.set("dobFrom", document.getElementById("dobFrom").value);
+            params.set("dobTo", document.getElementById("dobTo").value);
+            params.set("gender", document.getElementById("gender").value);
+            params.set("salaryFrom", document.getElementById("salaryFrom").value);
+            params.set("salaryTo", document.getElementById("salaryTo").value);
+            window.location.href = "?" + params.toString();
+        }
+
+           // Handle select all checkbox
+        $('#selectAll').on('click', function () {
+            $('.row-checkbox').prop('checked', $(this).prop('checked'));
+        });
+
+        // Handle row selection individually to uncheck 'Select All' if any checkbox is deselected
+        $('.row-checkbox').on('change', function () {
+            if (!$(this).prop('checked')) {
+                $('#selectAll').prop('checked', false);
+            } else if ($('.row-checkbox:checked').length === $('.row-checkbox').length) {
+                $('#selectAll').prop('checked', true);
+            }
+        });
+
+
+
+        function exportSelectedRows(format) {
+            const selectedIds = getSelectedRowIds();
+            if (selectedIds.length === 0) {
+                alert("Please select rows to export.");
+                return;
+            }
+
+            // Call server-side export method via AJAX
+            $.ajax({
+                url: '/Employee/Export',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ ids: selectedIds,format }),
+                xhrFields: {
+                    responseType: 'blob' // Handle binary data
+                },
+                success: function (data, status, xhr) {
+                    console.log(data);
+                    var fileName = xhr.getResponseHeader('content-disposition').split('filename=')[1].split(';')[0];
+                    const blob = new Blob([data], { type: xhr.getResponseHeader('Content-Type') });
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = fileName;
+                    link.click();
+                },
+                error: function (err) {
+                    console.log(err)
+                    alert("Export failed: " + err.status);
+                }
+            });
+        }
+
+        function getSelectedRowIds() {
+            const selectedIds = [];
+            $(".row-checkbox:checked").each(function () {
+                selectedIds.push($(this).val());
+            });
+            return selectedIds;
+        }
+
+
+    </script>
+}

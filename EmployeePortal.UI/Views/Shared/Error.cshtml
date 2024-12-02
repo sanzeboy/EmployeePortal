@@ -1,0 +1,11 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+<p>
+    <strong>Status Code:</strong> <code>@Model.StatusCode</code>
+</p>
+
+<h1 class="text-danger">@Model.Message.</h1>
+<h2 class="text-danger">@Model.Description</h2>
+

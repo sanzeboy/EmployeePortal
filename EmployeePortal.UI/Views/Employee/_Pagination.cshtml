@@ -1,0 +1,34 @@
+﻿@using EmployeePortal.Application.Services.Employees.Models.Dtos
+@using EmployeePortal.Application
+@model PagedResult<EmployeeDto>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <span>Total Rows: @Model.RowCount</span> |
+        <span>Rows Per Page: </span>
+        <select asp-for="PageSize" id="rowsPerPage" class="form-select form-select-sm d-inline-block w-auto" onchange="updateRowsPerPage(this)">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+        </select> |
+        <span>Page: @Model.CurrentPage of @Model.PageCount</span>
+    </div>
+</div>
+
+<nav>
+    <ul class="pagination">
+        @for (int i = 1; i <= Model.PageCount; i++)
+        {
+            <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-pageSize="@Model.PageSize">@i</a>
+            </li>
+        }
+    </ul>
+</nav>
+<script>
+    function updateRowsPerPage(selectElement) {
+        const rowsPerPage = selectElement.value;
+        window.location.href = `?pageNumber=1&pageSize=${rowsPerPage}`;
+    }
+</script>

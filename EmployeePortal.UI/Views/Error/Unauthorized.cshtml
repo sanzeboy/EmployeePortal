@@ -1,0 +1,11 @@
+﻿@model ErrorViewModel
+
+@{
+    ViewData["Title"] = "Unauthorized";
+}
+
+<div class="text-center">
+    <h1 class="display-4">401 - Unauthorized</h1>
+    <p>You are not authorized to view this page. Please log in with the proper credentials.</p>
+    <a class="btn btn-primary" href="@Url.Action("Login", "Account")">Go to Login</a>
+</div>

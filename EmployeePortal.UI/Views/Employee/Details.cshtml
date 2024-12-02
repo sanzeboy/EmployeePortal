@@ -1,0 +1,31 @@
+﻿@using EmployeePortal.Application.Services.Employees.Models.Dtos
+@model EmployeeDto
+@{
+    ViewBag.Title = "Employee Details";
+}
+
+<h2>Employee Details</h2>
+@if (!string.IsNullOrEmpty(Model.ProfileImage))
+{
+    <img id="profileImagePreview" src="@Url.Content("~/"+Model.ProfileImage)" alt="Profile Image" class="img-thumbnail mb-2" style="max-width: 150px;" />
+}
+<dl class="row">
+    <dt class="col-sm-2">Name:</dt>
+    <dd class="col-sm-10">@Model.FirstName @Model.LastName</dd>
+    <dt class="col-sm-2">Designation:</dt>
+    <dd class="col-sm-10">@Model.Designation</dd>
+    <dt class="col-sm-2">DOB:</dt>
+    <dd class="col-sm-10">@Model.DOB.ToShortDateString()</dd>
+    <dt class="col-sm-2">Gender:</dt>
+    <dd class="col-sm-10">@Model.Gender</dd>
+    <dt class="col-sm-2">Salary:</dt>
+    <dd class="col-sm-10">@Model.Salary.ToString()</dd>
+</dl>
+
+<div>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+    }
+    <a asp-action="Index" class="btn btn-primary">Back to List</a>
+</div>
